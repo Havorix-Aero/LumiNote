@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2024-11-06"
 compatibility_flags = ["nodejs_compat"]
 
+# The production hostname. Additional hosts must be subdomains of this name (for example
+# `www.luminote.havorix.cn`); the Workers custom-domain API rejects wildcards, so each prefix is
+# added as its own custom domain. The `havorix.cn` apex is deliberately never claimed here.
+routes = [{ pattern = "luminote.havorix.cn", custom_domain = true }]
+
 # The SPA is built into apps/web/dist and served from the same origin as the API.
 # SPA fallback is handled in src/index.ts, which keeps behaviour identical under
 # `wrangler dev`, production, and the Vitest Workers pool.
@@ -13,8 +18,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "luminote"
-# Replace with the id printed by: wrangler d1 create luminote
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "c989e261-1986-4edf-821e-f55aa0a9bc74"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
@@ -24,17 +28,12 @@ bucket_name = "luminote-audio"
 [triggers]
 crons = ["17 3 * * *"]
 
+# The top-level configuration is what `wrangler deploy` publishes, so it carries the production
+# values. Local development overrides ENVIRONMENT via `packages/worker/.dev.vars`.
+# Switch LLM_PROVIDER to `deepseek` once DEEPSEEK_API_KEY is set (see docs/providers.md).
 [vars]
-ENVIRONMENT = "development"
-LLM_PROVIDER = "mock"
-LLM_BASE_URL = "https://api.deepseek.com/v1"
-LLM_MODEL = "deepseek-chat"
-STT_PROVIDER = "mock"
-
-[env.production]
-[env.production.vars]
 ENVIRONMENT = "production"
-LLM_PROVIDER = "deepseek"
+LLM_PROVIDER = "mock"
 LLM_BASE_URL = "https://api.deepseek.com/v1"
 LLM_MODEL = "deepseek-chat"
 STT_PROVIDER = "mock"

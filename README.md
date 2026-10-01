@@ -36,6 +36,17 @@ pnpm dev:web
 > 前端开发服务器显式绑定 IPv4（`server.host`），因为 Node 默认只会挑选一个协议族，
 > 在 Windows 上通常是 IPv6，导致解析到 `127.0.0.1` 的工具连不上。
 
+## 线上部署
+
+- 生产地址：**https://luminote.havorix.cn** —— 部署在 Cloudflare Worker `luminote` 上，同源提供
+  `/api/v1/*` 与前端静态资源，数据落在同账号的 D1（`luminote`）与 R2（`luminote-audio`）。
+- 域名边界：只允许在 `luminote.havorix.cn` **前面加前缀**（如 `www.luminote.havorix.cn`），
+  不要占用 `havorix.cn` 顶级域。Workers 自定义域名接口不支持通配符，每个前缀要单独声明。
+- GitHub 仓库 `Havorix-Aero/LumiNote` 同时挂在 Cloudflare Pages 项目 `luminote`
+  （默认域名 `luminote-b5c.pages.dev`）上，**仅链接仓库、不绑定自定义域名**；对外流量一律走 Worker。
+
+完整步骤见 [docs/deployment.md](docs/deployment.md)。
+
 ## 端到端测试（Playwright）
 
 `pnpm test:e2e` 会驱动真实的栈：`wrangler dev`（Hono + 本地 D1）加上代理 `/api` 的 Vite

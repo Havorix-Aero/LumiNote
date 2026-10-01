@@ -1,4 +1,4 @@
-import { ApiError, isApiError } from '@luminote/core';
+import { ApiError, PBKDF2_ITERATIONS, isApiError } from '@luminote/core';
 import { describe, expect, it } from 'vitest';
 import { hashAnswer, normalizeAnswer, verifyAnswer } from '../src/crypto/answers';
 import { hashPassword, verifyPassword } from '../src/crypto/password';
@@ -33,6 +33,11 @@ describe('password hashing', () => {
   it('records the parameters so they can be raised later', async () => {
     const stored = await hashPassword('x', { iterations: 1234 });
     expect(JSON.parse(stored.paramsJson).iterations).toBe(1234);
+  });
+
+  it('stays within the iteration ceiling the Workers runtime enforces', () => {
+    // `workerd` locally accepts larger counts, so raising this only fails once deployed.
+    expect(PBKDF2_ITERATIONS).toBeLessThanOrEqual(100_000);
   });
 });
 

@@ -15,7 +15,7 @@ pnpm --filter @luminote/worker exec wrangler d1 create luminote
 pnpm --filter @luminote/worker exec wrangler r2 bucket create luminote-audio
 ```
 
-`d1 create` 会打印 `database_id`，把它填进 `packages/worker/wrangler.toml` 中 `database_id` 的位置（当前是占位符 `REPLACE_WITH_D1_DATABASE_ID`）。
+`d1 create` 会打印 `database_id`，把它填进 `packages/worker/wrangler.toml` 的 `database_id`。当前生产库（`luminote`，APAC）的 id 已经写在该文件里，重新创建时换成新值即可。
 
 ## 3. 配置密钥
 
@@ -31,7 +31,7 @@ pnpm --filter @luminote/worker exec wrangler secret put TOTP_MASTER_KEY
 pnpm --filter @luminote/worker exec wrangler secret put DEEPSEEK_API_KEY
 ```
 
-`wrangler.toml` 的 `[env.production.vars]` 已经把 `LLM_PROVIDER` 设为 `deepseek`；如需换成别的厂商，改 `LLM_BASE_URL` / `LLM_MODEL` 即可（见 [providers.md](providers.md)）。
+`wrangler.toml` 顶层的 `[vars]` 就是 `wrangler deploy` 发布出去的生产配置。默认 `LLM_PROVIDER = "mock"`（离线可用、不需要 Key）；拿到 Key 之后把它改成 `deepseek`，换厂商则改 `LLM_BASE_URL` / `LLM_MODEL`（见 [providers.md](providers.md)）。本地开发用 `packages/worker/.dev.vars` 覆盖这些值，例如那里把 `ENVIRONMENT` 设回 `development`。
 
 > 注意：密钥必须通过 `wrangler secret put` 写入。它们绝不能出现在 `wrangler.toml` 的 `[vars]` 里——那里是明文且会进版本库。
 
@@ -49,8 +49,21 @@ pnpm deploy
 
 等价于先 `vite build` 前端，再 `wrangler deploy`。部署完成后：
 
-- `https://<worker>.<subdomain>.workers.dev/` → 应用
-- `https://<worker>.<subdomain>.workers.dev/api/v1/health` → 健康检查
+- `https://luminote.havorix.cn/` → 应用
+- `https://luminote.havorix.cn/api/v1/health` → 健康检查（生产返回 `environment: "production"`）
+- `https://luminote.2938949347.workers.dev/` → 同一个 Worker 的 workers.dev 别名
+
+### 自定义域名
+
+`wrangler.toml` 的 `routes` 声明了 `luminote.havorix.cn`（`custom_domain = true`）：DNS 记录和证书都由 Cloudflare 自动签发，`wrangler deploy` 每次都会重新确认。
+
+- **域名边界**：只用 `luminote.havorix.cn` 以及它的前缀子域（如 `www.luminote.havorix.cn`），不要占用 `havorix.cn` 顶级域。
+- 要加前缀域名，就再加一条 `{ pattern = "www.luminote.havorix.cn", custom_domain = true }`。Workers 的自定义域名接口**不接受通配符**（`*.luminote.havorix.cn` 会返回 `100113`），每个前缀都得单独声明。
+- 想一次性覆盖任意前缀，只能改用 `routes` 里的通配路由 `*.luminote.havorix.cn/*`，并额外建一条代理状态的 `*` DNS 记录——这需要 Zone 的 DNS 编辑权限。
+
+### Cloudflare Pages
+
+仓库同时挂了一个 Pages 项目 `luminote`（默认域名 `luminote-b5c.pages.dev`），只链接 GitHub 仓库 `Havorix-Aero/LumiNote` 的 `main` 分支做构建（`pnpm --filter @luminote/web build` → `apps/web/dist`），**不绑定自定义域名**：对外流量一律走上面的 Worker。
 
 ## 6. 安装为应用
 

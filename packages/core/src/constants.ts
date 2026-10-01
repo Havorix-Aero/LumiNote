@@ -4,9 +4,16 @@
 export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_LENGTH = 256;
 
-/** PBKDF2 parameters. Stored per-credential so these can be raised without locking users out. */
+/**
+ * PBKDF2 parameters. Stored per-credential so these can be raised without locking users out.
+ *
+ * 100,000 is the ceiling the Workers runtime accepts for `crypto.subtle.deriveBits` — a larger
+ * count fails with "iteration counts above 100000 are not supported" and breaks every login in
+ * production, while still passing against the more permissive local `workerd`. It is therefore also
+ * the strongest work factor available for a single derivation.
+ */
 export const PBKDF2_HASH = 'SHA-256';
-export const PBKDF2_ITERATIONS = 210_000;
+export const PBKDF2_ITERATIONS = 100_000;
 export const PBKDF2_SALT_BYTES = 16;
 export const PBKDF2_KEY_BITS = 256;
 

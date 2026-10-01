@@ -2,7 +2,8 @@
 
 ## 口令
 
-- 使用 **PBKDF2-SHA256**（WebCrypto，无第三方依赖），每用户独立 128-bit 盐，默认 210,000 次迭代。
+- 使用 **PBKDF2-SHA256**（WebCrypto，无第三方依赖），每用户独立 128-bit 盐，默认 100,000 次迭代。
+- 100,000 是 Cloudflare Workers 运行时的上限：`crypto.subtle.deriveBits` 超出该值会直接报错（`iteration counts above 100000 are not supported`）。本地 `workerd` 不会拦，所以调高这个值只会在部署后才暴露问题——`packages/worker/test/auth.test.ts` 里有一条断言守住这个上限。
 - 迭代次数、哈希算法、盐长度都随凭据一起存储在 `credentials.params_json` 中，因此将来可以提升强度：旧哈希仍可验证，并在下一次成功登录时透明地重新哈希（`needsRehash`）。
 - 用户名不存在时也会执行一次 PBKDF2 计算，避免通过响应时间区分“用户不存在”和“密码错误”。
 
