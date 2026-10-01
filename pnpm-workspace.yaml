@@ -1,0 +1,13 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - sharp
+
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: true

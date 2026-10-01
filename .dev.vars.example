@@ -1,0 +1,17 @@
+# Copy to `.dev.vars` for local development. Never commit the real file.
+#
+# Generate fresh values with:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+
+# Mixed into session/device token hashes.
+SESSION_PEPPER="replace-with-32-random-bytes-base64url"
+
+# Base64url-encoded 32-byte AES-GCM key that protects TOTP secrets at rest.
+TOTP_MASTER_KEY="replace-with-32-random-bytes-base64url"
+
+# Provider selection. `mock` keeps everything offline and needs no credentials.
+LLM_PROVIDER="mock"
+LLM_BASE_URL="https://api.deepseek.com/v1"
+LLM_MODEL="deepseek-chat"
+# DEEPSEEK_API_KEY="sk-..."
+STT_PROVIDER="mock"

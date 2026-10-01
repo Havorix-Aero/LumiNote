@@ -1,0 +1,28 @@
+{
+  "name": "@luminote/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "cf-typegen": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply luminote --local",
+    "db:migrate:remote": "wrangler d1 migrations apply luminote --remote"
+  },
+  "dependencies": {
+    "@luminote/core": "workspace:*",
+    "@luminote/providers": "workspace:*",
+    "@luminote/versions": "workspace:*",
+    "hono": "^4.6.10",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.5.30",
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "wrangler": "^3.90.0"
+  }
+}
