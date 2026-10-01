@@ -8,14 +8,24 @@ import {
   USERNAME_MIN_LENGTH,
 } from '../constants';
 import { isKnownQuestionKey } from '../security-questions';
+import { USERNAME_PATTERN, USERNAME_RULE_MESSAGE } from '../usernames';
 
 export const usernameSchema = z
-  .string()
-  .min(USERNAME_MIN_LENGTH)
-  .max(USERNAME_MAX_LENGTH)
-  .regex(/^[a-zA-Z0-9._-]+$/, '用户名只能包含字母、数字、下划线、点和连字符');
+  .string({
+    required_error: '请输入用户名',
+    invalid_type_error: '用户名必须是文本',
+  })
+  .min(USERNAME_MIN_LENGTH, `用户名至少 ${USERNAME_MIN_LENGTH} 个字符`)
+  .max(USERNAME_MAX_LENGTH, `用户名最多 ${USERNAME_MAX_LENGTH} 个字符`)
+  .regex(USERNAME_PATTERN, USERNAME_RULE_MESSAGE);
 
-export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH);
+export const passwordSchema = z
+  .string({
+    required_error: '请输入密码',
+    invalid_type_error: '密码必须是文本',
+  })
+  .min(PASSWORD_MIN_LENGTH, `密码至少 ${PASSWORD_MIN_LENGTH} 位`)
+  .max(PASSWORD_MAX_LENGTH, `密码最多 ${PASSWORD_MAX_LENGTH} 位`);
 
 export const devicePlatformSchema = z.enum([
   'web-desktop',
@@ -43,8 +53,20 @@ export const registerRequestSchema = z
 
 export const loginRequestSchema = z
   .object({
-    username: usernameSchema,
-    password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
+    /**
+     * Deliberately more permissive than {@link usernameSchema}: this is an exact-match lookup, so
+     * anything that could be registered must stay loginable. Enforcing the current username rule
+     * here would lock out accounts created under an older rule — and would leak the rule to anyone
+     * probing the login endpoint.
+     */
+    username: z
+      .string({ required_error: '请输入用户名' })
+      .min(1, '请输入用户名')
+      .max(USERNAME_MAX_LENGTH, `用户名最多 ${USERNAME_MAX_LENGTH} 个字符`),
+    password: z
+      .string({ required_error: '请输入密码' })
+      .min(1, '请输入密码')
+      .max(PASSWORD_MAX_LENGTH, `密码最多 ${PASSWORD_MAX_LENGTH} 位`),
     device: deviceInfoSchema.optional(),
   })
   .strict();

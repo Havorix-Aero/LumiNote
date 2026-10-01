@@ -4,3 +4,4 @@ export * from './ids';
 export * from './schemas';
 export * from './security-questions';
 export * from './types';
+export * from './usernames';

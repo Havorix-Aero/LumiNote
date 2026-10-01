@@ -14,6 +14,30 @@ export class ApiClientError extends Error {
   }
 }
 
+interface ValidationIssue {
+  path?: unknown;
+  message?: unknown;
+}
+
+/**
+ * Turns any thrown value into something worth showing a user.
+ *
+ * Validation failures carry the per-field reasons the server produced; without them the UI can only
+ * echo the generic "请求参数校验失败", which tells the user nothing about what to fix.
+ */
+export function describeClientError(value: unknown): string {
+  if (!(value instanceof ApiClientError)) return '操作失败，请稍后重试。';
+
+  const details = value.details as { issues?: unknown } | null | undefined;
+  const issues = Array.isArray(details?.issues) ? (details.issues as ValidationIssue[]) : [];
+  const messages = issues
+    .map((issue) => (typeof issue.message === 'string' ? issue.message.trim() : ''))
+    .filter((message) => message.length > 0);
+
+  if (messages.length === 0) return value.message;
+  return [...new Set(messages)].join('；');
+}
+
 function readCookie(name: string): string | null {
   const prefix = `${name}=`;
   for (const part of document.cookie.split('; ')) {

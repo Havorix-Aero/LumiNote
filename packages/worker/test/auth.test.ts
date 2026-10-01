@@ -103,6 +103,32 @@ describe('registration and sessions', () => {
     expect(result.status).toBe(422);
   });
 
+  it('explains which field failed validation', async () => {
+    const client = new Client();
+    const response = await client.request('/api/v1/auth/register', {
+      method: 'POST',
+      json: { username: 'not-an-email@example.com', password: STRONG_PASSWORD },
+    });
+
+    expect(response.status).toBe(422);
+    const body = response.body as unknown as {
+      error?: { details?: { issues?: { path: string }[] } };
+    };
+    expect(body.error?.details?.issues?.map((issue) => issue.path)).toContain('username');
+  });
+
+  it('lets a legacy username that predates the current rule still log in', async () => {
+    const client = new Client();
+    const response = await client.request('/api/v1/auth/login', {
+      method: 'POST',
+      json: { username: 'legacy@name', password: STRONG_PASSWORD },
+    });
+
+    // 401 (unknown account), never 422 — the login route must not apply the registration-only
+    // username rule, or accounts created under an older rule could never sign in again.
+    expect(response.status).toBe(401);
+  });
+
   it('requires authentication for the session endpoint', async () => {
     const client = new Client();
     expect((await client.request('/api/v1/auth/session')).status).toBe(401);

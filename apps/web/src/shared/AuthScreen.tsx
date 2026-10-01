@@ -1,6 +1,7 @@
 import type { SecurityQuestionPrompt } from '@luminote/core';
+import { describeUsernameProblem } from '@luminote/core';
 import { useState } from 'react';
-import { ApiClientError } from '../lib/api';
+import { describeClientError } from '../lib/api';
 import {
   useLogin,
   useRegister,
@@ -44,12 +45,26 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
     verifyRecovery.isPending;
 
   function reportError(value: unknown) {
-    setError(value instanceof ApiClientError ? value.message : '操作失败，请稍后重试。');
+    setError(describeClientError(value));
   }
 
   async function submitCredentials(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+
+    // Catch a malformed name here: the server only answers 422 "请求参数校验失败", which leaves
+    // the user with no idea which field is wrong. Login still accepts any string, because a
+    // registered account must never be shut out by a rule introduced after it was created.
+    const usernameProblem = describeUsernameProblem(username);
+    if (usernameProblem !== null) {
+      setError(
+        stage.kind === 'register'
+          ? usernameProblem
+          : `${usernameProblem}。请检查用户名，或改用「还没有账号？去注册」创建账号。`,
+      );
+      return;
+    }
+
     try {
       const result =
         stage.kind === 'register'
