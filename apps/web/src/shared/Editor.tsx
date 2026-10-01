@@ -1,5 +1,6 @@
 import { applyInput, type EditorPreferences, type EditorState } from '@luminote/editor';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
 
 export interface EditorProps {
   value: string;
@@ -18,6 +19,10 @@ export interface EditorProps {
  * A plain controlled textarea plus the pure rule engine from `@luminote/editor`. Deliberately not
  * a rich-text framework: the product's signature behaviours (space to punctuation, auto blank
  * line, dash lists) are exactly the kind of thing contenteditable implementations fight you on.
+ *
+ * The focus ring sits on the wrapper rather than the textarea, so the borderless writing surface
+ * still shows keyboard focus — the previous version removed the outline and put nothing in its
+ * place.
  */
 export function Editor({
   value,
@@ -52,7 +57,7 @@ export function Editor({
   );
 
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
       // Never interfere with an active IME composition: Chinese input relies on the space key.
       if (event.nativeEvent.isComposing) return;
 
@@ -97,7 +102,7 @@ export function Editor({
   );
 
   const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
       onChange(event.target.value);
       setAutoPunctuationIndex(null);
     },
@@ -105,17 +110,19 @@ export function Editor({
   );
 
   return (
-    <textarea
-      ref={ref}
-      className="editor"
-      value={value}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-      placeholder={placeholder ?? '想到什么就先写下来…'}
-      autoFocus={autoFocus}
-      rows={minRows}
-      spellCheck={false}
-      aria-label="笔记内容"
-    />
+    <div className="rounded-card border border-line bg-surface-1 transition-colors focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/25">
+      <textarea
+        ref={ref}
+        className="editor block w-full resize-none border-0 bg-transparent px-4 py-4 text-[15px] leading-[1.9] text-fg outline-none placeholder:text-fg-subtle sm:px-5 sm:py-5"
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder ?? '想到什么就先写下来…'}
+        autoFocus={autoFocus}
+        rows={minRows}
+        spellCheck={false}
+        aria-label="笔记内容"
+      />
+    </div>
   );
 }

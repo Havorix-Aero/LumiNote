@@ -12,10 +12,32 @@ export interface SyncReport {
   at: string;
 }
 
-let running = false;
+let currentPass: Promise<SyncReport> | null = null;
+let queuedPass: Promise<SyncReport> | null = null;
 
 function mutationIdFor(entry: OutboxEntry): string {
   return `${entry.entity}:${entry.entityId}:${entry.enqueuedAt}`;
+}
+
+async function runPass(): Promise<SyncReport> {
+  const pushed = await pushOutbox();
+  const pulled = await pullChanges();
+  return {
+    ...pushed,
+    pulled: pulled.pulled,
+    cursor: pulled.cursor,
+    at: new Date().toISOString(),
+  };
+}
+
+function startPass(): Promise<SyncReport> {
+  const pass = runPass();
+  currentPass = pass;
+  const release = () => {
+    if (currentPass === pass) currentPass = null;
+  };
+  void pass.then(release, release);
+  return pass;
 }
 
 /**
@@ -23,30 +45,24 @@ function mutationIdFor(entry: OutboxEntry): string {
  *
  * Push-before-pull matters: it means the server has already decided who wins a conflicting edit
  * before this device sees the result, so the user never watches their own text get overwritten.
+ *
+ * A caller that arrives while a pass is in flight gets a *follow-up* pass rather than the in-flight
+ * one. Returning the in-flight pass would be silently wrong: it may already have read the outbox
+ * before this caller's change was written, so "立即同步" would look like it did nothing until the
+ * next interval tick. Every caller arriving during the same window shares one follow-up.
  */
-export async function runSync(): Promise<SyncReport> {
-  if (running)
-    return {
-      pushed: 0,
-      conflicts: 0,
-      rejected: 0,
-      pulled: 0,
-      cursor: 0,
-      at: new Date().toISOString(),
-    };
-  running = true;
-  try {
-    const pushed = await pushOutbox();
-    const pulled = await pullChanges();
-    return {
-      ...pushed,
-      pulled: pulled.pulled,
-      cursor: pulled.cursor,
-      at: new Date().toISOString(),
-    };
-  } finally {
-    running = false;
-  }
+export function runSync(): Promise<SyncReport> {
+  const running = currentPass;
+  if (!running) return startPass();
+
+  queuedPass ??= running
+    .catch(() => undefined)
+    .then(() => {
+      queuedPass = null;
+      return startPass();
+    });
+
+  return queuedPass;
 }
 
 async function pushOutbox(): Promise<Omit<SyncReport, 'pulled' | 'at'>> {

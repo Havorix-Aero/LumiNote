@@ -1,6 +1,9 @@
 import type { NoteVersionDto } from '@luminote/core';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
+import { Button } from '../components/Button';
+import { Badge } from '../components/Badge';
+import { Notice } from '../components/Notice';
 import { apiFetch } from '../lib/api';
 import { db } from '../lib/local-db';
 import { restoreLocalVersion } from '../lib/repository';
@@ -27,6 +30,13 @@ const SOURCE_LABELS: Record<string, string> = {
   manual: '手动保存',
   restore: '恢复',
   import: '冲突副本',
+};
+
+const SOURCE_TONES: Record<string, 'neutral' | 'accent' | 'ok' | 'caution'> = {
+  auto: 'neutral',
+  manual: 'accent',
+  restore: 'ok',
+  import: 'caution',
 };
 
 export function VersionHistory({ noteId, currentBody, mode, onRestored }: VersionHistoryProps) {
@@ -72,49 +82,69 @@ export function VersionHistory({ noteId, currentBody, mode, onRestored }: Versio
   }
 
   if (list.length === 0) {
-    return <p className="muted">还没有历史版本。开始编辑后会自动留下快照。</p>;
+    return (
+      <p className="text-xs leading-relaxed text-fg-subtle">
+        还没有历史版本。开始编辑后会自动留下快照。
+      </p>
+    );
   }
 
   return (
-    <div className="versions">
-      <ul className="versions__list">
-        {list.map((version) => (
-          <li key={version.id}>
-            <button
-              type="button"
-              className={`versions__item${selected?.id === version.id ? ' is-active' : ''}`}
-              onClick={() => setSelectedId(version.id)}
-            >
-              <span className="versions__stamp">{formatStamp(version.createdAt)}</span>
-              <span className={`versions__source versions__source--${version.source}`}>
-                {version.label ?? SOURCE_LABELS[version.source] ?? version.source}
-              </span>
-              {version.pinned ? (
-                <span className="versions__pin" aria-label="已固定">
-                  📌
-                </span>
-              ) : null}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <div className="versions__detail">
-        {selected ? (
-          <>
-            <div className="versions__actions">
-              <button type="button" className="button" onClick={handleRestore} disabled={busy}>
-                恢复此版本
-              </button>
+    <div className="versions flex min-h-0 flex-col gap-3">
+      <ul className="versions__list scrollbar-slim -mx-1 flex max-h-56 flex-col gap-1 overflow-y-auto px-1">
+        {list.map((version) => {
+          const isActive = selected?.id === version.id;
+          return (
+            <li key={version.id}>
               <button
                 type="button"
-                className="button button--ghost"
+                className={[
+                  'versions__item flex w-full cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors',
+                  isActive
+                    ? 'is-active border-accent/50 bg-accent-soft'
+                    : 'border-transparent hover:border-line hover:bg-surface-2',
+                ].join(' ')}
+                onClick={() => setSelectedId(version.id)}
+              >
+                <span className="versions__stamp tabular min-w-0 flex-1 truncate text-xs text-fg-muted">
+                  {formatStamp(version.createdAt)}
+                </span>
+                <Badge tone={SOURCE_TONES[version.source] ?? 'neutral'}>
+                  {version.label ?? SOURCE_LABELS[version.source] ?? version.source}
+                </Badge>
+                {version.pinned ? (
+                  <span className="versions__pin shrink-0 text-[11px]" aria-label="已固定">
+                    📌
+                  </span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="versions__detail flex flex-col gap-3">
+        {selected ? (
+          <>
+            <div className="versions__actions flex flex-wrap gap-1.5">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => void handleRestore()}
+                loading={busy}
+              >
+                恢复此版本
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => void handleTogglePin(selected)}
+                disabled={busy}
               >
                 {selected.pinned ? '取消固定' : '固定版本'}
-              </button>
+              </Button>
             </div>
-            {message ? <p className="notice">{message}</p> : null}
+            {message ? <Notice tone="ok">{message}</Notice> : null}
             <DiffView before={selected.body} after={currentBody} mode={mode} />
           </>
         ) : null}

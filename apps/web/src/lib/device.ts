@@ -16,7 +16,9 @@ export function detectDevice(): DeviceInfo {
   return { platform: 'web-desktop', label: '桌面浏览器' };
 }
 
+export const MOBILE_LAYOUT_QUERY = '(max-width: 820px), (pointer: coarse) and (max-width: 1024px)';
+
 /** Layout is chosen by viewport, with an explicit user override available in settings. */
 export function prefersMobileLayout(): boolean {
-  return window.matchMedia('(max-width: 820px), (pointer: coarse) and (max-width: 1024px)').matches;
+  return window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
 }

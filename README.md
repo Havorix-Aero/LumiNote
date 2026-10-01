@@ -81,7 +81,11 @@ pnpm test:e2e --ui                      # 交互式调试
 
 ```
 apps/web                  Vite + React PWA（桌面端 / 移动端两套组件树）
+  src/components            组件库（Button / Card / Badge / Field / Toast / Sheet …）
+  src/app                   路由与外壳装配
+  src/desktop src/mobile    两套外壳与页面
   src/shared                两端共享的编辑器、版本面板、鉴权页
+  src/styles                设计令牌（Tailwind v4 CSS-first）
   src/lib                   离线仓库（Dexie）、同步引擎、API 客户端
 packages/core             领域类型、zod 校验、错误码、常量
 packages/worker           Hono API + D1 迁移（同时承载静态资源与 cron）
@@ -96,6 +100,7 @@ docs                      架构、鉴权、部署、provider 说明
 - [架构说明](docs/architecture.md)
 - [鉴权与恢复流程](docs/auth.md)
 - [部署到 Cloudflare](docs/deployment.md)
+- [界面与设计系统](docs/ui.md)
 - [替换模型 / 语音 provider](docs/providers.md)
 
 ## 许可

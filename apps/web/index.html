@@ -2,17 +2,35 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
-    />
-    <meta name="theme-color" content="#0f1115" />
+    <!--
+      No `maximum-scale`: pinch-zoom has to stay available for a writing app.
+      `viewport-fit=cover` lets the standalone app paint under the notch and home indicator, which
+      the `.pt-safe` / `.pb-safe` helpers then pad back out.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="LumiNote" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>LumiNote</title>
+    <script>
+      // Decide the theme before the first paint so a dark-mode reload never flashes white.
+      // The storage key matches THEME_STORAGE_KEY in src/hooks/useTheme.ts.
+      (function () {
+        try {
+          var stored = localStorage.getItem('luminote.theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var dark = stored === 'dark' || ((stored === 'system' || !stored) && prefersDark);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (error) {
+          // Private modes can block localStorage; the light theme is the safe default.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

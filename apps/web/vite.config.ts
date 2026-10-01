@@ -1,3 +1,5 @@
+import { fileURLToPath, URL } from 'node:url';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -5,6 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
@@ -17,8 +20,8 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait-primary',
-        background_color: '#0f1115',
-        theme_color: '#0f1115',
+        background_color: '#0e1116',
+        theme_color: '#0e1116',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -41,6 +44,9 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  resolve: {
+    alias: [{ find: /^@\//, replacement: `${fileURLToPath(new URL('./src', import.meta.url))}/` }],
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,

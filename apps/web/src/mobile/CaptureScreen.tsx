@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSettings } from '../lib/settings';
 import { createLocalNote } from '../lib/repository';
+import { useSettings } from '../lib/settings';
 import { runSync } from '../lib/sync';
 import { Editor } from '../shared/Editor';
 
@@ -30,8 +30,9 @@ export function CaptureScreen() {
   );
 
   return (
-    <div className="capture">
-      <p className="capture__hint muted">直接开写，标题稍后再说。</p>
+    <div className="capture flex flex-col gap-3 p-4">
+      <p className="capture__hint text-xs text-fg-subtle">直接开写，标题稍后再说。</p>
+
       <Editor
         value=""
         onChange={handleChange}
@@ -40,8 +41,12 @@ export function CaptureScreen() {
         minRows={16}
         placeholder="想到什么就先写下来…"
       />
-      <p className="muted capture__tips">
-        按住语音键或稍后接入的语音接口，可以先把想法说出来再自动转写。
+
+      <p className="capture__tips flex items-center gap-2 rounded-lg border border-line bg-surface-1 px-3 py-2 text-[11px] leading-relaxed text-fg-subtle">
+        <span aria-hidden className="text-base">
+          🎙
+        </span>
+        语音接口已预留，接上之后可以先说出来再自动转写。
       </p>
     </div>
   );

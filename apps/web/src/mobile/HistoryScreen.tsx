@@ -8,9 +8,16 @@ export function HistoryScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="history">
-      <h1 className="history__title">笔记历史</h1>
-      <NoteList notes={notes} onSelect={(id) => navigate(`/n/${id}`)} />
+    <div className="history flex flex-col gap-3 p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h1 className="history__title text-base font-semibold text-fg">笔记历史</h1>
+        <span className="tabular text-xs text-fg-subtle">{notes.length} 条</span>
+      </div>
+      <NoteList
+        notes={notes}
+        onSelect={(id) => navigate(`/n/${id}`)}
+        emptyHint="还没有笔记。回到“记灵感”写下第一条吧。"
+      />
     </div>
   );
 }

@@ -1,28 +1,32 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useSession } from './lib/auth';
-import { prefersMobileLayout } from './lib/device';
-import { markSyncing, useOnline } from './lib/notes';
-import { META_KEYS, readMeta, resetLocalData, writeMeta } from './lib/local-db';
-import { useSettings } from './lib/settings';
-import { runSync, startSyncLoop } from './lib/sync';
-import { AuthScreen } from './shared/AuthScreen';
-import { QuestionReset } from './shared/QuestionReset';
-import { CaptureScreen } from './mobile/CaptureScreen';
-import { HistoryScreen } from './mobile/HistoryScreen';
-import { MobileApp } from './mobile/MobileApp';
-import { NoteScreen } from './mobile/NoteScreen';
-import { SettingsScreen } from './mobile/SettingsScreen';
-import { DesktopApp } from './desktop/DesktopApp';
-import { InspirationCenter } from './desktop/InspirationCenter';
-import { NoteView } from './desktop/NoteView';
-import { SettingsView } from './desktop/SettingsView';
+import { Spinner } from '../components/Button';
+import { DesktopShell } from '../desktop/DesktopShell';
+import { InspirationCenter } from '../desktop/InspirationCenter';
+import { NoteView } from '../desktop/NoteView';
+import { SettingsView } from '../desktop/SettingsView';
+import { useLayout } from '../hooks/useLayout';
+import { useSession } from '../lib/auth';
+import { META_KEYS, readMeta, resetLocalData, writeMeta } from '../lib/local-db';
+import { markSyncing, useOnline } from '../lib/notes';
+import { runSync, startSyncLoop } from '../lib/sync';
+import { CaptureScreen } from '../mobile/CaptureScreen';
+import { HistoryScreen } from '../mobile/HistoryScreen';
+import { MobileShell } from '../mobile/MobileShell';
+import { NoteScreen } from '../mobile/NoteScreen';
+import { SettingsScreen } from '../mobile/SettingsScreen';
+import { AuthScreen } from '../shared/AuthScreen';
+import { QuestionReset } from '../shared/QuestionReset';
 
-function useLayout(): 'desktop' | 'mobile' {
-  const settings = useSettings();
-  if (settings.layout === 'desktop') return 'desktop';
-  if (settings.layout === 'mobile') return 'mobile';
-  return prefersMobileLayout() ? 'mobile' : 'desktop';
+function BootScreen() {
+  return (
+    <div className="boot grid h-full place-items-center bg-surface-0 text-fg-muted">
+      <span className="flex items-center gap-2 text-sm">
+        <Spinner />
+        正在加载…
+      </span>
+    </div>
+  );
 }
 
 export function App() {
@@ -30,12 +34,20 @@ export function App() {
   const online = useOnline();
   const layout = useLayout();
 
-  // Keep the sync loop running whenever the app is mounted.
-  useEffect(() => startSyncLoop(), []);
+  const userId = session.data?.session?.user.id;
+
+  /*
+   * The sync loop only makes sense once there is a session. Starting it on the sign-in screen
+   * instead fires an unauthenticated `/sync/pull` that 401s on every tick, which both pollutes
+   * the console and spends the per-IP request budget.
+   */
+  useEffect(() => {
+    if (!userId) return;
+    return startSyncLoop();
+  }, [userId]);
 
   // Clear local data when a different account signs in on this device.
   useEffect(() => {
-    const userId = session.data?.session?.user.id;
     if (!userId) return;
     let cancelled = false;
     void (async () => {
@@ -53,10 +65,10 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [online, session.data?.session?.user.id]);
+  }, [online, userId]);
 
   if (session.isLoading) {
-    return <div className="boot">正在加载…</div>;
+    return <BootScreen />;
   }
 
   if (!session.data?.session) {
@@ -69,7 +81,7 @@ export function App() {
 
   return layout === 'mobile' ? (
     <Routes>
-      <Route element={<MobileApp />}>
+      <Route element={<MobileShell />}>
         <Route index element={<CaptureScreen />} />
         <Route path="history" element={<HistoryScreen />} />
         <Route path="n/:id" element={<NoteScreen />} />
@@ -81,7 +93,7 @@ export function App() {
     </Routes>
   ) : (
     <Routes>
-      <Route element={<DesktopApp />}>
+      <Route element={<DesktopShell />}>
         <Route index element={<InspirationCenter />} />
         <Route path="notes" element={<InspirationCenter />} />
         <Route path="notes/:id" element={<NoteView />} />

@@ -1,7 +1,11 @@
 import { SECURITY_QUESTION_COUNT } from '@luminote/core';
 import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { Button } from '../components/Button';
+import { Notice } from '../components/Notice';
 import { ApiClientError } from '../lib/api';
 import { useSecurityQuestions, useSetSecurityQuestions } from '../lib/auth';
+import { SecurityQuestionPicker } from './SecurityQuestions';
 
 /**
  * Non-skippable screen shown after a security-question login.
@@ -16,7 +20,7 @@ export function QuestionReset({ onDone }: { onDone: () => void }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const previouslyUsed = new Set(
+  const replaced = new Set(
     (catalog.data?.entries ?? []).filter((entry) => entry.active).map((entry) => entry.key),
   );
 
@@ -30,7 +34,7 @@ export function QuestionReset({ onDone }: { onDone: () => void }) {
     );
   }
 
-  async function submit(event: React.FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     if (selected.length !== SECURITY_QUESTION_COUNT) {
@@ -46,51 +50,39 @@ export function QuestionReset({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="auth">
-      <div className="auth__card auth__card--wide">
-        <h1 className="auth__title">重设密保问题</h1>
-        <p className="auth__subtitle">
+    <div className="auth grid min-h-full place-items-center bg-surface-0 px-4 py-10">
+      <div className="w-full max-w-2xl rounded-card border border-line bg-surface-1 p-5 shadow-sm sm:p-6">
+        <h1 className="text-lg font-semibold text-fg">重设密保问题</h1>
+        <p className="mt-1 text-sm leading-relaxed text-fg-muted">
           你刚刚用密保问题登录，需要重新设置全部 {SECURITY_QUESTION_COUNT} 个问题后才能继续使用。
         </p>
-        {error ? <p className="auth__error">{error}</p> : null}
-        <form onSubmit={submit} className="questions">
-          <ul className="questions__catalog">
-            {(catalog.data?.catalog ?? []).map((question) => {
-              const isSelected = selected.includes(question.key);
-              return (
-                <li key={question.key}>
-                  <label className={`questions__option${isSelected ? ' is-selected' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggle(question.key)}
-                    />
-                    <span>{question.prompt}</span>
-                    {previouslyUsed.has(question.key) ? (
-                      <em className="muted">（已停用）</em>
-                    ) : null}
-                  </label>
-                  {isSelected ? (
-                    <input
-                      className="questions__answer"
-                      value={answers[question.key] ?? ''}
-                      onChange={(event) =>
-                        setAnswers((current) => ({
-                          ...current,
-                          [question.key]: event.target.value,
-                        }))
-                      }
-                      placeholder="你的答案（不区分大小写与空格）"
-                      required
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-          <button type="submit" className="button button--primary" disabled={save.isPending}>
-            保存并继续（已选 {selected.length}/{SECURITY_QUESTION_COUNT}）
-          </button>
+
+        {error ? (
+          <div className="mt-4">
+            <Notice tone="critical">{error}</Notice>
+          </div>
+        ) : null}
+
+        <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
+          <SecurityQuestionPicker
+            catalog={catalog.data?.catalog ?? []}
+            selected={selected}
+            answers={answers}
+            onToggle={toggle}
+            onAnswer={(key, value) => setAnswers((current) => ({ ...current, [key]: value }))}
+            replaced={replaced}
+            disabled={save.isPending}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <span className="text-xs text-fg-subtle">
+              已选 <span className="tabular font-medium text-fg">{selected.length}</span> /{' '}
+              {SECURITY_QUESTION_COUNT}
+            </span>
+            <Button type="submit" variant="primary" size="lg" loading={save.isPending}>
+              保存并继续
+            </Button>
+          </div>
         </form>
       </div>
     </div>

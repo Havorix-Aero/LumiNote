@@ -25,34 +25,78 @@ function preview(body: string): string {
   return flattened.length > 80 ? `${flattened.slice(0, 80)}…` : flattened;
 }
 
+/**
+ * The scrolling list of notes.
+ *
+ * Rendered from the local store rather than the server, so a note appears the moment it is typed
+ * — which is also why the end-to-end suite reads it back to prove a write reached IndexedDB.
+ */
 export function NoteList({ notes, activeId, onSelect, emptyHint }: NoteListProps) {
   if (notes.length === 0) {
     return (
-      <p className="muted note-list__empty">{emptyHint ?? '还没有笔记，写下第一条灵感吧。'}</p>
+      <div className="note-list__empty px-3 py-6 text-center text-xs leading-relaxed text-fg-subtle">
+        {emptyHint ?? '还没有笔记，写下第一条灵感吧。'}
+      </div>
     );
   }
 
   return (
-    <ul className="note-list">
-      {notes.map((note) => (
-        <li key={note.id}>
-          <button
-            type="button"
-            className={`note-list__item${activeId === note.id ? ' is-active' : ''}`}
-            onClick={() => onSelect(note.id)}
-          >
-            <span className="note-list__title">
-              {note.pinned ? '📌 ' : ''}
-              {note.title ?? deriveTitle(note.body) ?? '未命名灵感'}
-            </span>
-            <span className="note-list__preview">{preview(note.body)}</span>
-            <span className="note-list__meta">
-              {relativeTime(note.updatedAt)}
-              {note.dirty ? ' · 待同步' : ''}
-            </span>
-          </button>
-        </li>
-      ))}
+    <ul className="note-list flex flex-col gap-1">
+      {notes.map((note) => {
+        const isActive = activeId === note.id;
+        return (
+          <li key={note.id}>
+            <button
+              type="button"
+              className={[
+                'note-list__item group relative flex w-full cursor-pointer flex-col gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors',
+                isActive
+                  ? 'is-active border-accent/50 bg-accent-soft'
+                  : 'border-transparent hover:border-line hover:bg-surface-2',
+              ].join(' ')}
+              onClick={() => onSelect(note.id)}
+            >
+              {/* The active marker is a bar rather than a border so the card never shifts width. */}
+              {isActive ? (
+                <span
+                  aria-hidden
+                  className="absolute top-2 bottom-2 -left-px w-0.5 rounded-full bg-accent"
+                />
+              ) : null}
+
+              <span
+                className={[
+                  'note-list__title flex items-center gap-1.5 truncate text-sm font-medium',
+                  isActive ? 'text-accent-ink' : 'text-fg',
+                ].join(' ')}
+              >
+                {note.pinned ? (
+                  <span aria-hidden className="shrink-0 text-[11px]">
+                    📌
+                  </span>
+                ) : null}
+                <span className="truncate">
+                  {note.title ?? deriveTitle(note.body) ?? '未命名灵感'}
+                </span>
+              </span>
+
+              <span className="note-list__preview line-clamp-2 text-xs leading-relaxed text-fg-muted">
+                {preview(note.body) || '（空白）'}
+              </span>
+
+              <span className="note-list__meta tabular mt-0.5 flex items-center gap-1.5 text-[11px] text-fg-subtle">
+                {relativeTime(note.updatedAt)}
+                {note.dirty ? (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span className="text-caution">待同步</span>
+                  </>
+                ) : null}
+              </span>
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 }

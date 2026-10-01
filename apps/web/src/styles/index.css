@@ -1,0 +1,220 @@
+@import 'tailwindcss';
+
+/*
+ * Tailwind v4 is configured in CSS: there is no tailwind.config.js.
+ * Dark mode is driven by `<html class="dark">`, which the inline script in index.html sets before
+ * the first paint so a dark-mode reload never flashes white.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic design tokens.
+ *
+ * Components only ever reference the semantic names (`bg-surface-1`, `text-fg-muted`,
+ * `border-line`, …), never a literal colour, so switching themes is a matter of swapping the
+ * variable values below and nothing else.
+ *
+ * LumiNote keeps its own identity — the accent is the warm gold from the original palette rather
+ * than a generic blue — but the token shape matches the other Havorix frontends so the systems
+ * stay interchangeable.
+ */
+@theme inline {
+  /*
+   * Latin letters and digits render in JetBrains Mono (self-hosted, imported in main.tsx); the font
+   * has no CJK glyphs, so Chinese falls through to the system stack and its typography is
+   * untouched. The effect is that every number and identifier is monospaced and reads as
+   * "technical", while prose stays in the platform's Chinese face.
+   */
+  --font-sans:
+    'JetBrains Mono Variable', 'JetBrains Mono', 'Inter', 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-inverted: var(--fg-inverted);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  /*
+   * `accent` is the fill (a gold button), `accent-fg` is the ink that sits on that fill, and
+   * `accent-ink` is the accent used as *text* on a normal surface.
+   *
+   * Gold is light in both themes, so unlike a blue accent a single value cannot do both jobs: as
+   * a fill it needs a dark foreground, and as text on white it would only reach ~2.3:1. Splitting
+   * the roles keeps the brand colour without failing WCAG AA anywhere.
+   */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-caution: var(--caution);
+  --color-caution-soft: var(--caution-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+
+  --radius-card: 0.75rem;
+}
+
+:root {
+  color-scheme: light;
+
+  --surface-0: #f5f6f8;
+  --surface-1: #ffffff;
+  --surface-2: #f1f3f6;
+  --surface-3: #e8ebf0;
+
+  --fg: #16191f;
+  --fg-muted: #5a6472; /* 6.0:1 on surface-1 */
+  --fg-subtle: #626c7b; /* 5.3:1 on surface-1, 4.7:1 on surface-2 */
+  --fg-inverted: #ffffff;
+
+  --line: #e2e6ec;
+  --line-strong: #c9d0da;
+
+  --accent: #e8a826; /* fill; 8.5:1 against --accent-fg */
+  --accent-hover: #d59a1a;
+  --accent-soft: #fdf3dc;
+  --accent-fg: #241503;
+  --accent-ink: #8a5c00; /* 5.9:1 as text on surface-1 */
+
+  --ok: #157a4a;
+  --ok-soft: #e4f5ec;
+  --info: #1d5fd6;
+  --info-soft: #e6efff;
+  --caution: #a16207;
+  --caution-soft: #fdf0dc;
+  --warning: #b45309;
+  --warning-soft: #fdece2;
+  --critical: #c02626;
+  --critical-soft: #fdeaea;
+
+  --overlay: rgb(15 17 21 / 0.45);
+}
+
+/*
+ * The dark theme is not an inversion of the light one: the surfaces get deeper and the ink gets
+ * lighter, and `--accent-ink` collapses back onto `--accent` because on a dark surface the gold
+ * already clears 9:1 on its own.
+ */
+.dark {
+  color-scheme: dark;
+
+  --surface-0: #0e1116;
+  --surface-1: #161a21;
+  --surface-2: #1b2029;
+  --surface-3: #222833;
+
+  --fg: #e8ecf3;
+  --fg-muted: #9aa4b4; /* 7.0:1 on surface-1 */
+  --fg-subtle: #7d8794; /* 4.7:1 on surface-1 */
+  --fg-inverted: #14181f;
+
+  --line: #262d38;
+  --line-strong: #39414f;
+
+  --accent: #f0b429; /* 10.1:1 against --accent-fg */
+  --accent-hover: #ffc247;
+  --accent-soft: #2a2110;
+  --accent-fg: #1a1206;
+  --accent-ink: #f0b429; /* 9.6:1 as text on surface-1 */
+
+  --ok: #4ade80;
+  --ok-soft: #10231a;
+  --info: #6aa8ff;
+  --info-soft: #14243d;
+  --caution: #fbbf24;
+  --caution-soft: #2a2110;
+  --warning: #fb923c;
+  --warning-soft: #2d1a10;
+  --critical: #f87171;
+  --critical-soft: #2c1416;
+
+  --overlay: rgb(0 0 0 / 0.6);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--surface-0);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* The installed PWA is a full-screen webview, so the shell must not rubber-band. */
+  overscroll-behavior-y: none;
+}
+
+/* Numbers are monospaced so changing values never shift the layout around them. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+::selection {
+  background-color: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* Slim scrollbars: the note list and the keyword strip are both scroll containers. */
+.scrollbar-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.scrollbar-slim::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-slim::-webkit-scrollbar-thumb {
+  background-color: var(--line-strong);
+  border-radius: 999px;
+}
+
+.scrollbar-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* iOS home-indicator and notch padding for the standalone app. */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
